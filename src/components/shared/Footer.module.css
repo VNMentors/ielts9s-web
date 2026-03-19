@@ -1,0 +1,52 @@
+.footer {
+  background: #fff;
+  border-top: 1px solid var(--border);
+  padding: 80px 0 40px;
+}
+
+.inner {
+  display: grid;
+  grid-template-columns: 2fr repeat(3, 1fr);
+  gap: 60px;
+  margin-bottom: 60px;
+}
+
+.brand { display: flex; flex-direction: column; gap: 20px; }
+.logo { display: flex; align-items: center; gap: 4px; font-weight: 800; font-size: 1.5rem; }
+.logo9 { color: var(--green); }
+.logoIelts { color: var(--text); }
+
+.tagline { font-size: 0.95rem; color: var(--text-muted); line-height: 1.6; font-weight: 500; }
+
+.socials { display: flex; gap: 16px; }
+.socials a {
+  width: 36px; height: 36px; border-radius: 50%;
+  background: #f5f5f5; color: var(--text-muted);
+  display: flex; align-items: center; justify-content: center;
+  transition: var(--transition);
+}
+.socials a:hover { background: var(--green); color: #fff; }
+
+.col { display: flex; flex-direction: column; gap: 20px; }
+.colTitle { font-size: 1rem; font-weight: 800; color: #111; }
+.col ul { list-style: none; display: flex; flex-direction: column; gap: 12px; }
+.colLink { font-size: 0.9rem; color: var(--text-muted); font-weight: 600; transition: var(--transition); }
+.colLink:hover { color: var(--green); }
+
+.bottom {
+  border-top: 1px solid var(--border);
+  padding-top: 40px;
+  display: flex; justify-content: space-between; align-items: center;
+  font-size: 0.9rem; color: var(--text-muted); font-weight: 600;
+}
+
+@media (max-width: 900px) {
+  .inner { grid-template-columns: 1fr 1fr; gap: 40px; }
+  .brand { grid-column: span 2; }
+}
+
+@media (max-width: 600px) {
+  .inner { grid-template-columns: 1fr; }
+  .brand { grid-column: span 1; }
+  .bottom { flex-direction: column; gap: 12px; text-align: center; }
+}

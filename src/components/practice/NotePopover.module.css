@@ -1,0 +1,212 @@
+.notePopover {
+  position: fixed;
+  z-index: 9999;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2), 0 2px 8px rgba(0,0,0,0.12);
+  width: 320px;
+  transform: translateX(-50%) translateY(calc(-100% - 12px));
+  overflow: hidden;
+  border: 1px solid #e0e6f0;
+}
+
+.notePopover::after {
+  content: "";
+  position: absolute;
+  bottom: -8px;
+  left: 50%;
+  transform: translateX(-50%);
+  border-width: 8px 8px 0;
+  border-style: solid;
+  border-color: #fff transparent transparent;
+  filter: drop-shadow(0 2px 2px rgba(0,0,0,0.08));
+}
+
+.noteHeader {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  background: #2a3a5f;
+  color: #fff;
+}
+
+.noteIcon { font-size: 1rem; }
+.noteTitle { font-weight: 700; font-size: 0.9rem; flex: 1; }
+
+.noteClose {
+  background: none;
+  border: none;
+  color: rgba(255,255,255,0.7);
+  cursor: pointer;
+  font-size: 1rem;
+  padding: 2px 6px;
+  border-radius: 4px;
+  line-height: 1;
+  transition: all 0.15s;
+}
+.noteClose:hover { color: #fff; background: rgba(255,255,255,0.1); }
+
+.selectedPreview {
+  padding: 8px 16px;
+  font-size: 0.8rem;
+  color: #666;
+  font-style: italic;
+  background: #f8f9fb;
+  border-bottom: 1px solid #eee;
+  line-height: 1.4;
+}
+
+.noteTextarea {
+  width: 100%;
+  padding: 12px 16px;
+  border: none;
+  outline: none;
+  resize: none;
+  font-size: 0.9rem;
+  color: #333;
+  line-height: 1.6;
+  font-family: inherit;
+  background: #fff;
+  box-sizing: border-box;
+}
+
+.noteFooter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 16px;
+  background: #f8f9fb;
+  border-top: 1px solid #eee;
+}
+
+.noteHint { font-size: 0.72rem; color: #aaa; }
+
+.noteBtns { display: flex; gap: 8px; }
+
+.noteCancelBtn {
+  padding: 6px 14px;
+  border: 1.5px solid #ddd;
+  background: #fff;
+  border-radius: 6px;
+  font-size: 0.82rem;
+  cursor: pointer;
+  color: #666;
+  font-weight: 600;
+  transition: all 0.15s;
+}
+.noteCancelBtn:hover { background: #f0f0f0; }
+
+.noteSaveBtn {
+  padding: 6px 14px;
+  border: none;
+  background: #2a3a5f;
+  color: #fff;
+  border-radius: 6px;
+  font-size: 0.82rem;
+  cursor: pointer;
+  font-weight: 700;
+  transition: all 0.15s;
+}
+.noteSaveBtn:hover { background: #1e2d4f; }
+.noteSaveBtn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* Notes List Panel */
+.notesListOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.4);
+  z-index: 8000;
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-end;
+  padding: 70px 16px 0;
+}
+
+.notesList {
+  background: #fff;
+  border-radius: 12px;
+  width: 360px;
+  max-height: calc(100vh - 100px);
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 12px 40px rgba(0,0,0,0.25);
+  overflow: hidden;
+}
+
+.notesListHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  background: #2a3a5f;
+  color: #fff;
+  font-weight: 700;
+  font-size: 0.95rem;
+  flex-shrink: 0;
+}
+
+.notesEmpty {
+  padding: 40px 24px;
+  text-align: center;
+  color: #aaa;
+  font-size: 0.9rem;
+  line-height: 1.6;
+}
+
+.notesItems {
+  overflow-y: auto;
+  flex: 1;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.noteItem {
+  background: #f8f9fb;
+  border-radius: 10px;
+  padding: 14px 16px;
+  border: 1px solid #e8ecf2;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.noteItemQuote {
+  font-size: 0.8rem;
+  color: #888;
+  font-style: italic;
+  border-left: 3px solid #2a3a5f;
+  padding-left: 10px;
+  line-height: 1.5;
+}
+
+.noteItemText {
+  font-size: 0.9rem;
+  color: #333;
+  line-height: 1.5;
+  font-weight: 500;
+}
+
+.noteItemFooter {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 4px;
+}
+
+.noteTime { font-size: 0.75rem; color: #bbb; }
+
+.noteDeleteBtn {
+  background: none;
+  border: none;
+  color: #f44336;
+  font-size: 0.78rem;
+  cursor: pointer;
+  padding: 3px 8px;
+  border-radius: 4px;
+  transition: background 0.15s;
+  font-weight: 600;
+}
+.noteDeleteBtn:hover { background: #ffeaea; }

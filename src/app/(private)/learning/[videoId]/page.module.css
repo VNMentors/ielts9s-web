@@ -1,0 +1,20 @@
+.page { padding: 40px 0 80px; max-width: 1000px; margin: 0 auto; }
+.loading, .notFound { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 60vh; gap: 24px; color: var(--text-muted); }
+.spinner { width: 44px; height: 44px; border: 4px solid #f0f0f0; border-top-color: var(--green); border-radius: 50%; animation: spin 0.8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.back { background: none; border: none; color: var(--text-muted); font-size: 1rem; font-weight: 700; cursor: pointer; margin-bottom: 32px; padding: 0; transition: var(--transition); display: flex; align-items: center; gap: 8px; }
+.back:hover { color: var(--green); transform: translateX(-4px); }
+.videoWrapper { width: 100%; background: #000; border-radius: var(--radius-lg); overflow: hidden; margin-bottom: 32px; aspect-ratio: 16/9; box-shadow: 0 20px 40px rgba(0,0,0,0.15); }
+.video { width: 100%; height: 100%; display: block; }
+.info { margin-bottom: 32px; background: #fff; padding: 32px; border-radius: var(--radius-lg); box-shadow: var(--shadow); }
+.meta { display: flex; align-items: center; gap: 16px; margin-bottom: 16px; }
+.duration { font-size: 0.95rem; color: var(--text-muted); font-weight: 700; }
+.title { font-size: 2rem; font-weight: 800; margin-bottom: 16px; color: #111; }
+.desc { font-size: 1.05rem; color: var(--text-muted); line-height: 1.8; font-weight: 500; }
+.ctaCard { display: flex; align-items: center; justify-content: space-between; gap: 32px; flex-wrap: wrap; background: var(--green-glow); border-color: rgba(0,153,0,0.15); }
+.ctaCard p { font-size: 1.1rem; font-weight: 700; color: #111; }
+
+@media (max-width: 650px) {
+  .ctaCard { flex-direction: column; text-align: center; }
+  .title { font-size: 1.6rem; }
+}

@@ -1,0 +1,39 @@
+.page { }
+.title { font-size: 2rem; font-weight: 800; margin-bottom: 12px; color: #111; }
+.sub { color: var(--text-muted); font-size: 1rem; margin-bottom: 32px; font-weight: 500; }
+
+.help {
+  background: #f9fbf9;
+  border: 1.5px solid #eef2ee;
+  border-radius: var(--radius-lg);
+  padding: 24px;
+  margin-bottom: 32px;
+  font-size: 0.9rem;
+  color: #444;
+}
+.help strong { color: #111; font-weight: 800; }
+.help ul { margin-top: 12px; margin-left: 20px; display: flex; flex-direction: column; gap: 6px; }
+.help li { line-height: 1.6; font-weight: 500; }
+.help code { background: #fff; padding: 2px 8px; border-radius: 4px; font-size: 0.85rem; color: var(--green); border: 1px solid #ddd; font-family: "Courier New", monospace; font-weight: 700; }
+
+.jsonArea {
+  width: 100%;
+  background: #fcfcfc;
+  border: 1.5px solid #eee;
+  border-radius: var(--radius-lg);
+  color: #111;
+  font-family: "Courier New", monospace;
+  font-size: 0.9rem;
+  padding: 24px;
+  line-height: 1.6;
+  resize: vertical;
+  transition: var(--transition);
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);
+}
+.jsonArea:focus { outline: none; border-color: var(--green); background: #fff; box-shadow: 0 0 0 4px var(--green-glow); }
+
+.actions { display: flex; gap: 16px; margin-top: 24px; margin-bottom: 24px; }
+
+.status { padding: 18px 24px; border-radius: var(--radius-lg); font-weight: 700; font-size: 0.95rem; box-shadow: var(--shadow); }
+.success { background: #f0fdf4; border: 1.5px solid #dcfce7; color: #166534; }
+.error { background: #fef2f2; border: 1.5px solid #fee2e2; color: #991b1b; }

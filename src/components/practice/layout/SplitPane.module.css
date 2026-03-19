@@ -1,0 +1,59 @@
+.splitWrapper {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  background: #fff;
+  overflow: hidden;
+  position: relative;
+}
+
+.leftPane {
+  height: 100%;
+  overflow-y: auto;
+  overflow-x: hidden;
+  border-right: 1px solid #eee;
+}
+
+.rightPane {
+  height: 100%;
+  overflow-y: auto;
+  overflow-x: hidden;
+  background: #fdfdfd;
+}
+
+.resizer {
+  width: 12px;
+  cursor: col-resize;
+  background: #f8f9fa;
+  border-left: 1px solid #eee;
+  border-right: 1px solid #eee;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s;
+  z-index: 10;
+  margin: 0 -6px;
+}
+
+.resizer:hover {
+  background: #ced4da;
+}
+
+.resizerHandle {
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  color: #888;
+  font-size: 0.6rem;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.resizerHandle span {
+  display: inline-block;
+}
