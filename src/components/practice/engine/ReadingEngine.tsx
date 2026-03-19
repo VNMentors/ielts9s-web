@@ -98,13 +98,17 @@ export default function ReadingEngine({ test, onFinish }: { test: any; onFinish:
     return () => document.removeEventListener("selectionchange", debouncedSelectionChange);
   }, []);
 
-  // Timer
   useEffect(() => {
     const timer = setInterval(() => setTimeLeft((prev) => (prev > 0 ? prev - 1 : 0)), 1000);
     document.body.style.overflow = "hidden";
+    
+    const handleOpenNote = () => setShowNotesList(true);
+    window.addEventListener("openIeltsNote", handleOpenNote);
+    
     return () => {
       clearInterval(timer);
       document.body.style.overflow = "auto";
+      window.removeEventListener("openIeltsNote", handleOpenNote);
     };
   }, []);
 
@@ -143,18 +147,40 @@ export default function ReadingEngine({ test, onFinish }: { test: any; onFinish:
     }
   }, []);
 
+  const applyCustomHighlight = (range: Range, color: string, noteId?: string) => {
+    const span = document.createElement(noteId ? 'a' : 'mark');
+    if (noteId) {
+      span.setAttribute('href', `#${noteId}`);
+      span.className = "ielts-note";
+      span.style.textDecoration = "underline";
+      span.style.textDecorationStyle = "dashed";
+      span.style.backgroundColor = "rgba(255, 165, 0, 0.4)";
+      span.style.color = "#000";
+    } else {
+      span.className = "ielts-highlight";
+      span.style.backgroundColor = color;
+      span.style.color = "#000";
+    }
+    
+    try {
+      range.surroundContents(span);
+    } catch (e) {
+      try {
+        const fragment = range.extractContents();
+        span.appendChild(fragment);
+        range.insertNode(span);
+      } catch (err) {
+        console.warn("Highlight failed:", err);
+      }
+    }
+  };
+
   const handleHighlight = useCallback(() => {
     if (selectionRange) {
       const sel = window.getSelection();
       sel?.removeAllRanges();
       sel?.addRange(selectionRange);
-      document.designMode = "on";
-      document.execCommand("backColor", false, "yellow");
-      document.designMode = "off";
-    } else {
-      document.designMode = "on";
-      document.execCommand("backColor", false, "yellow");
-      document.designMode = "off";
+      applyCustomHighlight(selectionRange, "yellow");
     }
     setMenuPos(null);
     setMenuMode("main");
@@ -164,11 +190,20 @@ export default function ReadingEngine({ test, onFinish }: { test: any; onFinish:
 
   const handleNoteClick = useCallback(() => {
     if (!menuPos) return;
+    
+    if (selectionRange) {
+      const sel = window.getSelection();
+      sel?.removeAllRanges();
+      sel?.addRange(selectionRange);
+      const tempId = `note-${Date.now()}`;
+      applyCustomHighlight(selectionRange, "orange", tempId);
+    }
+
     setNotePos(menuPos);
     setShowNotePopover(true);
     setMenuPos(null);
     window.getSelection()?.removeAllRanges();
-  }, [menuPos]);
+  }, [menuPos, selectionRange]);
 
   const handleSaveNote = useCallback((note: Note) => {
     setNotes((prev) => {
@@ -215,10 +250,16 @@ export default function ReadingEngine({ test, onFinish }: { test: any; onFinish:
   };
 
   const handleNext = () => {
-    if (currentQId < allQuestionIds[allQuestionIds.length - 1]) setCurrentQId(currentQId + 1);
+    const currentIndex = allQuestionIds.indexOf(currentQId);
+    if (currentIndex < allQuestionIds.length - 1) {
+      scrollToQuestion(allQuestionIds[currentIndex + 1]);
+    }
   };
   const handleBack = () => {
-    if (currentQId > allQuestionIds[0]) setCurrentQId(currentQId - 1);
+    const currentIndex = allQuestionIds.indexOf(currentQId);
+    if (currentIndex > 0) {
+      scrollToQuestion(allQuestionIds[currentIndex - 1]);
+    }
   };
 
   const getPartProgress = (partIdx: number) => {
@@ -235,6 +276,126 @@ export default function ReadingEngine({ test, onFinish }: { test: any; onFinish:
   };
 
   const activePart = test.parts[activePartIndex];
+
+  const MemoizedPanes = useMemo(() => {
+    return (
+      <main className={styles.mainLayout}>
+        <SplitPane
+          left={
+            <div className={styles.paneContent}>
+              <div className={styles.partHeaderBox}>
+                <h3>Part {activePart?.number}</h3>
+                <p>Read the text and answer Questions {partRanges[activePartIndex]?.min}–{partRanges[activePartIndex]?.max}</p>
+              </div>
+              <div className={styles.passageWrapper}>
+                <h1 className={styles.passageTitle}>{activePart?.title}</h1>
+                <PassageRenderer
+                  html={activePart?.passageHtml || ""}
+                  answers={answers}
+                  onDrop={setAnswer}
+                />
+              </div>
+            </div>
+          }
+          right={
+            <div style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
+              <div 
+                className={styles.paneContent} 
+                style={{ flex: 1, overflowY: 'auto' }}
+                onClick={(e) => {
+                  const target = e.target as HTMLElement;
+                  if (target.tagName === 'A' && target.getAttribute('href')?.startsWith('#note-')) {
+                    e.preventDefault();
+                    setShowNotesList(true);
+                  }
+                }}
+              >
+                {activePart?.questionGroups.map((group: any) => (
+                  <div key={group.id} className={styles.qGroup}>
+                    <div className={styles.groupHeader}>
+                      <h3>
+                        {group.type}
+                        <span className={styles.qRange}> (Questions {group.range})</span>
+                      </h3>
+                      <p className={styles.instructions}>{group.instructions}</p>
+                    </div>
+                    {(() => {
+                      const templateTypes = ["Note Completion", "Summary Completion", "Sentence Completion", "Gap Filling", "Matching Sentence Endings"];
+                      const isGrid = group.type === "Matching Information" && group.renderType === "grid";
+                      const isHeadings = group.type === "Matching Headings";
+                      const isMulti = group.type === "Multiple Choice" && /TWO|THREE|FOUR/i.test(group.instructions || "");
+                      const isGroupLevel = templateTypes.includes(group.type) || isGrid || isHeadings || isMulti;
+
+                      if (isGroupLevel) {
+                        return (
+                          <div className={styles.qItemWithBookmark}>
+                            <div style={{ flex: 1 }}>
+                              <QuestionRenderer group={group} />
+                              <div className={styles.groupBookmarks} style={{ marginTop: '16px', borderTop: '1px solid #eee', paddingTop: '12px', display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
+                                <span style={{ fontSize: '0.8rem', color: '#888', marginRight: '4px' }}>Bookmarks:</span>
+                                {group.questions.map((q: any) => (
+                                  <button
+                                    key={q.id}
+                                    className={`${styles.bookmarkBtn} ${bookmarked.has(q.id) ? styles.bookmarkActive : ""}`}
+                                    onClick={() => toggleBookmark(q.id)}
+                                    title={`Bookmark Question ${q.id}`}
+                                    style={{ padding: '2px 8px', fontSize: '0.85rem', background: '#fff', border: '1px solid #e0e0e0', borderRadius: '4px' }}
+                                  >
+                                    <span style={{ fontSize: '0.8rem', marginRight: '4px', color: '#555', fontWeight: 600 }}>{q.id}</span>
+                                    {bookmarked.has(q.id) ? "🔖" : "🏳"}
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      }
+
+                      return group.questions.map((q: any) => (
+                        <div key={q.id} className={styles.qItemWithBookmark}>
+                          <div style={{ flex: 1 }}>
+                            <QuestionRenderer question={q} group={group} />
+                          </div>
+                          <button
+                            className={`${styles.bookmarkBtn} ${bookmarked.has(q.id) ? styles.bookmarkActive : ""}`}
+                            onClick={() => toggleBookmark(q.id)}
+                            title={bookmarked.has(q.id) ? "Remove bookmark" : "Bookmark this question"}
+                          >
+                            {bookmarked.has(q.id) ? "🔖" : "🏳"}
+                          </button>
+                        </div>
+                      ));
+                    })()}
+                  </div>
+                ))}
+              </div>
+
+              {/* Paginator at Bottom Right of Right Pane */}
+              <div style={{ display: 'flex', justifyContent: 'flex-end', padding: '16px 40px', background: '#fff', borderTop: '1px solid #eaeff8', zIndex: 10, gap: '4px' }}>
+                <button
+                  className={styles.blackBtn}
+                  onClick={handleBack}
+                  disabled={currentQId === allQuestionIds[0]}
+                  title="Previous Question"
+                >
+                  ←
+                </button>
+                <button
+                  className={styles.blackBtn}
+                  onClick={handleNext}
+                  disabled={currentQId === allQuestionIds[allQuestionIds.length - 1]}
+                  title="Next Question"
+                >
+                  →
+                </button>
+              </div>
+
+            </div>
+          }
+        />
+      </main>
+    );
+  }, [activePartIndex, activePart, partRanges, answers, setAnswer, bookmarked, currentQId, allQuestionIds, handleNext, handleBack, test]);
 
   return (
     <div
@@ -287,13 +448,14 @@ export default function ReadingEngine({ test, onFinish }: { test: any; onFinish:
           style={{ top: menuPos.y, left: menuPos.x, transform: "translateX(-50%) translateY(calc(-100% - 12px))" }}
           onMouseDown={(e) => e.preventDefault()}
         >
-          <button className={styles.menuItem} onClick={handleNoteClick}>
+          <button className={styles.menuItem} onMouseDown={(e) => { e.preventDefault(); handleNoteClick(); }}>
             <span className={styles.menuIcon}>📝</span> Add Note
           </button>
-          <button className={styles.menuItem} onClick={handleHighlight}>
+          <button className={styles.menuItem} onMouseDown={(e) => { e.preventDefault(); handleHighlight(); }}>
             <span className={styles.menuIcon}>🖍️</span> Highlight
           </button>
-          <button className={styles.menuItem} onClick={() => {
+          <button className={styles.menuItem} onMouseDown={(e) => {
+            e.preventDefault();
             document.designMode = "on";
             document.execCommand("backColor", false, "transparent");
             document.designMode = "off";
@@ -326,99 +488,10 @@ export default function ReadingEngine({ test, onFinish }: { test: any; onFinish:
       )}
 
       {/* MAIN SPLIT PANE */}
-      <main className={styles.mainLayout}>
-        <SplitPane
-          left={
-            <div className={styles.paneContent}>
-              <div className={styles.partHeaderBox}>
-                <h3>Part {activePart.number}</h3>
-                <p>Read the text and answer Questions {partRanges[activePartIndex]?.min}–{partRanges[activePartIndex]?.max}</p>
-              </div>
-              <div className={styles.passageWrapper}>
-                <h1 className={styles.passageTitle}>{activePart.title}</h1>
-                <PassageRenderer
-                  html={activePart.passageHtml}
-                  answers={answers}
-                  onDrop={setAnswer}
-                />
-              </div>
-            </div>
-          }
-          right={
-            <div className={styles.paneContent}>
-              {activePart.questionGroups.map((group: any) => (
-                <div key={group.id} className={styles.qGroup}>
-                  <div className={styles.groupHeader}>
-                    <h3>
-                      {group.type}
-                      <span className={styles.qRange}> (Questions {group.range})</span>
-                    </h3>
-                    <p className={styles.instructions}>{group.instructions}</p>
-                  </div>
-                  {(() => {
-                    const templateTypes = ["Note Completion", "Summary Completion", "Sentence Completion", "Gap Filling", "Matching Sentence Endings"];
-                    const isGrid = group.type === "Matching Information" && group.renderType === "grid";
-                    const isHeadings = group.type === "Matching Headings";
-                    const isMulti = group.type === "Multiple Choice" && /TWO|THREE|FOUR/i.test(group.instructions || "");
-                    const isGroupLevel = templateTypes.includes(group.type) || isGrid || isHeadings || isMulti;
-
-                    if (isGroupLevel) {
-                      return (
-                        <div className={styles.qItemWithBookmark}>
-                          <div style={{ flex: 1 }}>
-                            <QuestionRenderer group={group} />
-                            <div className={styles.groupBookmarks} style={{ marginTop: '16px', borderTop: '1px solid #eee', paddingTop: '12px', display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
-                              <span style={{ fontSize: '0.8rem', color: '#888', marginRight: '4px' }}>Bookmarks:</span>
-                              {group.questions.map((q: any) => (
-                                <button
-                                  key={q.id}
-                                  className={`${styles.bookmarkBtn} ${bookmarked.has(q.id) ? styles.bookmarkActive : ""}`}
-                                  onClick={() => toggleBookmark(q.id)}
-                                  title={`Bookmark Question ${q.id}`}
-                                  style={{ padding: '2px 8px', fontSize: '0.85rem', background: '#fff', border: '1px solid #e0e0e0', borderRadius: '4px' }}
-                                >
-                                  <span style={{ fontSize: '0.8rem', marginRight: '4px', color: '#555', fontWeight: 600 }}>{q.id}</span>
-                                  {bookmarked.has(q.id) ? "🔖" : "🏳"}
-                                </button>
-                              ))}
-                            </div>
-                          </div>
-                        </div>
-                      );
-                    }
-
-                    return group.questions.map((q: any) => (
-                      <div key={q.id} className={styles.qItemWithBookmark}>
-                        <div style={{ flex: 1 }}>
-                          <QuestionRenderer question={q} group={group} />
-                        </div>
-                        <button
-                          className={`${styles.bookmarkBtn} ${bookmarked.has(q.id) ? styles.bookmarkActive : ""}`}
-                          onClick={() => toggleBookmark(q.id)}
-                          title={bookmarked.has(q.id) ? "Remove bookmark" : "Bookmark this question"}
-                        >
-                          {bookmarked.has(q.id) ? "🔖" : "🏳"}
-                        </button>
-                      </div>
-                    ));
-                  })()}
-                </div>
-              ))}
-            </div>
-          }
-        />
-      </main>
+      {MemoizedPanes}
 
       {/* FOOTER NAV */}
       <footer className={styles.bottomBar}>
-        <button
-          className={styles.navBtn}
-          onClick={handleBack}
-          disabled={currentQId === allQuestionIds[0]}
-        >
-          ← Back
-        </button>
-
         <div className={styles.footerSegments}>
           {test.parts.map((_: any, idx: number) => {
             const prog = getPartProgress(idx);
@@ -469,11 +542,15 @@ export default function ReadingEngine({ test, onFinish }: { test: any; onFinish:
         </div>
 
         <button
-          className={styles.navBtn}
-          onClick={handleNext}
-          disabled={currentQId === allQuestionIds[allQuestionIds.length - 1]}
+          className={styles.submitBtn}
+          onClick={() => {
+            if (confirm("Are you sure you want to submit your test?")) {
+              alert("Test submitted successfully!");
+            }
+          }}
+          title="Submit Test"
         >
-          Next →
+          ✓
         </button>
       </footer>
     </div>

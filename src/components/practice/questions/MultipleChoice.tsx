@@ -29,7 +29,7 @@ export default function MultipleChoice({ question, group }: MultipleChoiceProps)
           <span className={styles.gapCircle}>{question.id}</span>
           <p className={styles.qText}>{question.text}</p>
         </div>
-        <div style={{ display: 'flex', flexDirection: 'row', gap: '20px', marginLeft: '34px', marginTop: '12px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginLeft: '34px', marginTop: '12px' }}>
           {tfngOptions.map((opt: string) => {
             const isSelected = answers[String(question.id)] === opt;
             return (

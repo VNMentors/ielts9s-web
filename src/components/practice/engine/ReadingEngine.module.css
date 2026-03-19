@@ -181,6 +181,15 @@
   min-height: 0;
 }
 
+.questionPane {
+  flex: 1;
+  padding: 0px 20px;
+  background: #fff;
+  overflow-y: auto;
+  min-height: 100%;
+  position: relative;
+}
+
 .paneContent {
   padding: 0;
   height: 100%;
@@ -189,14 +198,37 @@
 }
 
 .partHeaderBox {
-  background: #f0f3f8;
-  padding: 14px 40px;
-  border-bottom: 2px solid #dde3f0;
+  background: #f8f9fa;
+  padding: 14px 20px;
+  border-radius: 8px;
+  margin-bottom: 24px;
   position: sticky;
   top: 0;
-  z-index: 10;
+  z-index: 5;
+  border: 1px solid #eaeff8;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }
 
+/* Submit Footer Button */
+.submitBtn {
+  background: #f0f0f0;
+  color: #000;
+  border: none;
+  font-size: 1.5rem;
+  width: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  height: 100%;
+  transition: background 0.2s;
+}
+
+.submitBtn:hover {
+  background: #e0e0e0;
+}
 .partHeaderBox h3 { font-size: 1rem; font-weight: 800; color: #1f2f52; margin-bottom: 3px; }
 .partHeaderBox p { font-size: 0.88rem; color: #555; }
 
@@ -358,36 +390,38 @@
 }
 
 .partProgressLabel {
-  font-size: 0.72rem;
+  font-size: 0.85rem;
+  color: #666;
   font-weight: 500;
-  color: #aaa;
 }
 
 .qNavContainer {
   display: flex;
   align-items: center;
-  flex-wrap: wrap;
-  gap: 5px;
+  flex-wrap: nowrap;
+  gap: 3px;
   padding: 4px 0;
+  overflow-x: visible;
 }
 
 .qNavItem {
-  min-width: 30px;
-  height: 30px;
-  background: #f4f6fb;
-  border: 1.5px solid #d8deec;
+  min-width: 24px;
+  height: 24px;
+  padding: 0 2px;
+  background: transparent;
+  border: 2px solid transparent;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 0.78rem;
-  font-weight: 800;
-  border-radius: 5px;
+  font-size: 0.85rem;
+  font-weight: 600;
   cursor: pointer;
   color: #555;
   transition: all 0.15s;
+  border-radius: 2px;
 }
 
-.qNavItem:hover { border-color: #2a3a5f; color: #2a3a5f; background: #eef3ff; }
-.qNavItemActive { background: #1f2f52 !important; color: #fff !important; border-color: #1f2f52 !important; }
-.qNavItemAnswered { background: #deeeff !important; border-color: #5a83c8 !important; color: #1f2f52 !important; }
-.qNavItemBookmarked { border-bottom: 2.5px solid #f39c12 !important; }
+.qNavItem:hover { background: #f1f4f9; color: #000; }
+.qNavItemActive { border: 2px solid #000 !important; color: #000 !important; font-weight: 800 !important; background: transparent !important; }
+.qNavItemAnswered { border-bottom: 2.5px solid #666 !important; background: transparent !important; color: #222 !important; border-radius: 0; }
+.qNavItemBookmarked { background: #ffe0b2 !important; border: 1px solid #f39c12 !important; }

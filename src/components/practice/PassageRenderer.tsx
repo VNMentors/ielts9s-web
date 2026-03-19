@@ -18,14 +18,41 @@ export default function PassageRenderer({ html, answers, onDrop }: PassageRender
   const parts = html.split(/(\[\[\d+\]\])/g);
 
   return (
-    <div className={styles.passageContent}>
+    <div 
+      className={styles.passageContent}
+      contentEditable={true}
+      suppressContentEditableWarning={true}
+      style={{ outline: "none" }}
+      onBeforeInput={(e) => {
+        // Only allow formatting commands (like backColor, createLink) from execCommand.
+        const inputType = (e.nativeEvent as InputEvent).inputType;
+        if (inputType && !inputType.startsWith('format')) {
+          e.preventDefault();
+        }
+      }}
+      onKeyDown={(e) => {
+        // Block text deletion keys (Backspace, Delete) just to be safe
+        if (e.key === "Backspace" || e.key === "Delete" || e.key === "Enter") {
+          e.preventDefault();
+        }
+      }}
+      onClick={(e) => {
+        const target = e.target as HTMLElement;
+        if (target.tagName === 'A' && target.getAttribute('href')?.startsWith('#note-')) {
+          e.preventDefault();
+          // Dispatch a custom event to notify ReadingEngine
+          const event = new CustomEvent('openIeltsNote', { detail: target.getAttribute('href')?.replace('#note-', '') });
+          window.dispatchEvent(event);
+        }
+      }}
+    >
       {parts.map((part, idx) => {
         const match = part.match(/\[\[(\d+)\]\]/);
         if (match) {
           const qId = match[1];
           const val = answers[qId] || "";
           return (
-            <span key={idx} className={styles.inlineDropWrapper}>
+            <span key={idx} className={styles.inlineDropWrapper} contentEditable={false}>
               <DropZone
                 id={qId}
                 value={val}
