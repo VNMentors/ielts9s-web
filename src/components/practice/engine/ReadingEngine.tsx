@@ -33,6 +33,8 @@ export default function ReadingEngine({ test, onFinish }: { test: any; onFinish:
   const [showNotePopover, setShowNotePopover] = useState(false);
   const [showNotesList, setShowNotesList] = useState(false);
   const [notePos, setNotePos] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
+  const [selectionRange, setSelectionRange] = useState<Range | null>(null);
+
 
   const allQuestionIds = useMemo(() => {
     const ids: number[] = [];
@@ -58,20 +60,13 @@ export default function ReadingEngine({ test, onFinish }: { test: any; onFinish:
     });
   }, [test.parts]);
 
-  // Auto-switch part and scroll
+  // Load from local storage
   useEffect(() => {
-    const partIndex = test.parts.findIndex((part: any) =>
-      part.questionGroups.some((group: any) =>
-        group.questions.some((q: any) => q.id === currentQId)
-      )
-    );
-    if (partIndex !== -1 && partIndex !== activePartIndex) setActivePartIndex(partIndex);
-    setTimeout(() => {
-      // Find the element for this question or fallback to group box
-      const el = document.getElementById(`q-box-${currentQId}`);
-      if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
-    }, 100);
-  }, [currentQId, test.parts]);
+    try {
+      const savedNotes = localStorage.getItem("ielts_notes");
+      if (savedNotes) setNotes(JSON.parse(savedNotes));
+    } catch(e) {}
+  }, []);
 
   // Handle selection continuously to catch any generic text selection
   useEffect(() => {
@@ -86,6 +81,7 @@ export default function ReadingEngine({ test, onFinish }: { test: any; onFinish:
              setSelectionText(sel.toString().trim());
              setMenuPos({ x: rect.left + rect.width / 2, y: rect.top });
              setMenuMode("main");
+             setSelectionRange(range.cloneRange());
           }
         }
       }
@@ -134,6 +130,7 @@ export default function ReadingEngine({ test, onFinish }: { test: any; onFinish:
         const rect = range.getBoundingClientRect();
         if (rect.width > 0) {
           setSelectionText(sel.toString().trim());
+          setSelectionRange(range.cloneRange());
           setMenuPos({ x: rect.left + rect.width / 2, y: rect.top });
           setMenuMode("main");
           setShowNotePopover(false);
@@ -142,15 +139,28 @@ export default function ReadingEngine({ test, onFinish }: { test: any; onFinish:
     } else {
       setMenuPos(null);
       setSelectionText("");
+      setSelectionRange(null);
     }
   }, []);
 
-  const handleHighlight = useCallback((color: string) => {
-    document.execCommand("backColor", false, color);
+  const handleHighlight = useCallback(() => {
+    if (selectionRange) {
+      const sel = window.getSelection();
+      sel?.removeAllRanges();
+      sel?.addRange(selectionRange);
+      document.designMode = "on";
+      document.execCommand("backColor", false, "yellow");
+      document.designMode = "off";
+    } else {
+      document.designMode = "on";
+      document.execCommand("backColor", false, "yellow");
+      document.designMode = "off";
+    }
     setMenuPos(null);
     setMenuMode("main");
+    setSelectionRange(null);
     window.getSelection()?.removeAllRanges();
-  }, []);
+  }, [selectionRange]);
 
   const handleNoteClick = useCallback(() => {
     if (!menuPos) return;
@@ -161,13 +171,48 @@ export default function ReadingEngine({ test, onFinish }: { test: any; onFinish:
   }, [menuPos]);
 
   const handleSaveNote = useCallback((note: Note) => {
-    setNotes((prev) => [note, ...prev]);
+    setNotes((prev) => {
+      const newNotes = [note, ...prev];
+      localStorage.setItem("ielts_notes", JSON.stringify(newNotes));
+      return newNotes;
+    });
     setShowNotePopover(false);
   }, []);
 
   const handleDeleteNote = useCallback((id: string) => {
-    setNotes((prev) => prev.filter((n) => n.id !== id));
+    setNotes((prev) => {
+      const newNotes = prev.filter((n) => n.id !== id);
+      localStorage.setItem("ielts_notes", JSON.stringify(newNotes));
+      return newNotes;
+    });
   }, []);
+
+  // Load notes on mount
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem("ielts_notes");
+      if (saved) setNotes(JSON.parse(saved));
+    } catch(e) {}
+  }, []);
+
+  const scrollToQuestion = (qId: number) => {
+    setCurrentQId(qId);
+    
+    // Auto-switch part if the clicked question belongs to another part
+    const partIndex = test.parts.findIndex((part: any) =>
+      part.questionGroups.some((group: any) =>
+        group.questions.some((q: any) => q.id === qId)
+      )
+    );
+    if (partIndex !== -1 && partIndex !== activePartIndex) {
+      setActivePartIndex(partIndex);
+    }
+
+    setTimeout(() => {
+      const el = document.getElementById(`q-box-${qId}`);
+      if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
+    }, 50);
+  };
 
   const handleNext = () => {
     if (currentQId < allQuestionIds[allQuestionIds.length - 1]) setCurrentQId(currentQId + 1);
@@ -242,29 +287,21 @@ export default function ReadingEngine({ test, onFinish }: { test: any; onFinish:
           style={{ top: menuPos.y, left: menuPos.x, transform: "translateX(-50%) translateY(calc(-100% - 12px))" }}
           onMouseDown={(e) => e.preventDefault()}
         >
-          {menuMode === "main" ? (
-            <>
-              <button className={styles.menuItem} onClick={handleNoteClick}>
-                <span className={styles.menuIcon}>📝</span> Add Note
-              </button>
-              <button className={styles.menuItem} onClick={() => setMenuMode("colors")}>
-                <span className={styles.menuIcon}>🖊️</span> Highlight
-              </button>
-            </>
-          ) : (
-            <div className={styles.colorPicker}>
-              {HIGHLIGHT_COLORS.map((c) => (
-                <button
-                  key={c.id}
-                  className={styles.colorSwatch}
-                  style={{ background: c.color }}
-                  title={c.label}
-                  onClick={() => handleHighlight(c.color)}
-                />
-              ))}
-              <button className={styles.colorSwatch} style={{ background: "transparent", border: "1.5px solid #ccc", fontSize: "0.7rem", color: "#888" }} onClick={() => handleHighlight("transparent")} title="Remove">✕</button>
-            </div>
-          )}
+          <button className={styles.menuItem} onClick={handleNoteClick}>
+            <span className={styles.menuIcon}>📝</span> Add Note
+          </button>
+          <button className={styles.menuItem} onClick={handleHighlight}>
+            <span className={styles.menuIcon}>🖍️</span> Highlight
+          </button>
+          <button className={styles.menuItem} onClick={() => {
+            document.designMode = "on";
+            document.execCommand("backColor", false, "transparent");
+            document.designMode = "off";
+            setMenuPos(null);
+            window.getSelection()?.removeAllRanges();
+          }} style={{ color: '#888' }}>
+            <span className={styles.menuIcon}>✕</span> Remove
+          </button>
         </div>
       )}
 
@@ -390,11 +427,14 @@ export default function ReadingEngine({ test, onFinish }: { test: any; onFinish:
               <div
                 key={idx}
                 className={`${styles.partSegment} ${isActive ? styles.activePartSegment : ""}`}
-                onClick={() => setCurrentQId(partRanges[idx].min)}
+                onClick={() => {
+                  setActivePartIndex(idx);
+                  setCurrentQId(partRanges[idx].min);
+                }}
               >
-                <span className={styles.partLabel}>Part {idx + 1}</span>
                 {isActive ? (
                   <div className={styles.qNavContainer}>
+                    <span className={styles.partLabel} style={{marginRight: "12px", marginBottom: 0}}>Part {idx + 1}</span>
                     {allQuestionIds
                       .filter((id) => id >= partRanges[idx].min && id <= partRanges[idx].max)
                       .map((id) => {
@@ -409,7 +449,7 @@ export default function ReadingEngine({ test, onFinish }: { test: any; onFinish:
                               ${isAnswered && !isCurrent ? styles.qNavItemAnswered : ""}
                               ${isBookmarked ? styles.qNavItemBookmarked : ""}
                             `}
-                            onClick={(e) => { e.stopPropagation(); setCurrentQId(id); }}
+                            onClick={(e) => { e.stopPropagation(); scrollToQuestion(id); }}
                             title={isBookmarked ? "Bookmarked" : undefined}
                           >
                             {id}
@@ -418,10 +458,10 @@ export default function ReadingEngine({ test, onFinish }: { test: any; onFinish:
                       })}
                   </div>
                 ) : (
-                  <span className={styles.partProgress}>
-                    {prog.answered}/{prog.total}
-                    <span className={styles.partProgressLabel}> answered</span>
-                  </span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span className={styles.partLabel} style={{marginBottom: 0}}>Part {idx + 1}</span>
+                    <span className={styles.partProgressLabel}>{prog.answered} of {prog.total}</span>
+                  </div>
                 )}
               </div>
             );

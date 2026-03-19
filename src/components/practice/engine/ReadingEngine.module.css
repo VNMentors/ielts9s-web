@@ -328,9 +328,10 @@
   border-right: 1px solid #eaeff8;
   height: 100%;
   justify-content: center;
+  align-items: center; /* Center horizontally */
   cursor: pointer;
   transition: background 0.15s;
-  min-width: 120px;
+  flex: 1;
 }
 
 .partSegment:hover { background: #f5f8ff; }
@@ -338,7 +339,6 @@
 .activePartSegment {
   background: #fff;
   border-bottom: 3px solid #1f2f52;
-  min-width: 200px;
   flex: 1;
 }
 

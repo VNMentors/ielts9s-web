@@ -33,7 +33,7 @@ export default function MatchingHeadings({ group }: MatchingHeadingsProps) {
             return (
               <DraggablePill
                 key={h}
-                id={label}
+                id={h}
                 text={`${label}. ${textToDisplay}`}
                 type="heading"
                 isUsed={isUsed}
